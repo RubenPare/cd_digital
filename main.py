@@ -1,3 +1,9 @@
+"""
+CD Digital - Reproductor de disco para fans
+Version liviana: el APK no trae los mp3, los descarga del servidor
+la primera vez que cada tema se reproduce y los guarda en cache local.
+"""
+
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -6,16 +12,28 @@ from kivy.clock import mainthread
 from kivy.properties import StringProperty, BooleanProperty
 from kivy.lang import Builder
 import os
+import sys
 import threading
 import requests
 
-Builder.load_file("player.kv")
+def resource_path(nombre_archivo):
+    """Devuelve la ruta correcta al archivo, tanto corriendo con python main.py
+    como empaquetado en un .exe con PyInstaller."""
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, nombre_archivo)
+    return os.path.join(os.path.abspath("."), nombre_archivo)
 
-SERVER_URL = "http://127.0.0.1:8000"
+Builder.load_file(resource_path("player.kv"))
+
+# --------------------------------------------------------------------
+# CONFIGURACION - apunta esto a tu servidor FastAPI
+# --------------------------------------------------------------------
+SERVER_URL = "https://cd-digital-server.onrender.com"
 API_KEY = "cambiar-esta-clave-123"
 
 CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cd_digital_cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
+# --------------------------------------------------------------------
 
 
 class TrackItem(BoxLayout):
@@ -48,7 +66,7 @@ class CDDigitalApp(App):
             r = requests.get(
                 f"{SERVER_URL}/tracks",
                 headers={"x-api-key": API_KEY},
-                timeout=10,
+                timeout=60,
             )
             r.raise_for_status()
             data = r.json()
@@ -86,7 +104,7 @@ class CDDigitalApp(App):
                 r = requests.get(
                     f"{SERVER_URL}/caratula",
                     headers={"x-api-key": API_KEY},
-                    timeout=10,
+                    timeout=60,
                 )
                 if r.status_code == 200:
                     with open(cache_path, "wb") as f:
@@ -120,7 +138,7 @@ class CDDigitalApp(App):
             r = requests.get(
                 f"{SERVER_URL}/audio/{track_id}",
                 headers={"x-api-key": API_KEY},
-                timeout=30,
+                timeout=60,
                 stream=True,
             )
             r.raise_for_status()

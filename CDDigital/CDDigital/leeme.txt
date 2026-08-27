@@ -1,0 +1,18 @@
+CD DIGITAL - [Nombre de tu banda]
+====================================
+
+Como instalar:
+1. Descomprimir este ZIP en cualquier carpeta de tu compu
+2. Abrir la carpeta descomprimida
+3. Hacer doble click en CDDigital.exe
+
+Si Windows muestra un aviso de "Editor desconocido" o
+"Windows protegio tu PC": es normal en apps nuevas sin firma
+digital. Click en "Mas informacion" y despues en "Ejecutar de
+todas formas".
+
+Necesitas conexion a internet la primera vez que escuches
+cada tema (se descarga una sola vez, despues queda guardado
+en tu compu).
+
+Cualquier problema, escribime.
