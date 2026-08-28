@@ -4,3 +4,4 @@ build/
 *.spec
 *.zip
 __pycache__/
+CDDigital/
