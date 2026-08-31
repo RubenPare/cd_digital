@@ -11,9 +11,14 @@ NOMBRE_BANDA = "Nombre de la Banda"
 NOMBRE_DISCO = "Nombre del Disco"
 
 TRACKLIST = [
-    {"id": "track01", "titulo": "01 - Tema Uno", "archivo": "track01.mp3"},
-    {"id": "track02", "titulo": "02 - Tema Dos", "archivo": "track02.mp3"},
-    {"id": "track03", "titulo": "03 - Tema Tres", "archivo": "track03.mp3"},
+    {"id": "track01", "titulo": "Volvimos a adjuntar", "archivo": "track01.mp3"},
+    {"id": "track02", "titulo": "Unidad", "archivo": "track02.mp3"},
+    {"id": "track03", "titulo": "Cómo", "archivo": "track03.mp3"},
+    {"id": "track04", "titulo": "Justo", "archivo": "track04.mp3"},
+    {"id": "track05", "titulo": "Cualidad", "archivo": "track05.mp3"},
+    {"id": "track06", "titulo": "Vestidos de negro", "archivo": "track06.mp3"},
+    {"id": "track07", "titulo": "Amar es solo un sueño", "archivo": "track07.mp3"},
+    {"id": "track08", "titulo": "Olla popular", "archivo": "track08.mp3"},
 ]
 
 

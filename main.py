@@ -43,7 +43,7 @@ Builder.load_file(
 # CONFIGURACION
 # --------------------------------------------------------------------
 
-SERVER_URL = "https://cd-digital-server.onrender.com"
+SERVER_URL = "https://cd-digital.onrender.com"
 
 API_KEY = "cambiar-esta-clave-123"
 
