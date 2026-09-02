@@ -1,94 +1,271 @@
-#:kivy 2.0
+
+#:kivy 2.0.0
+
+
+# ================================================================
+# ITEM DE CADA TEMA
+# ================================================================
 
 <TrackItem>:
+
     size_hint_y: None
-    height: dp(48)
-    padding: dp(10), 0
+    height: dp(52)
+
+    padding: dp(8), dp(3)
+
 
     Button:
-        id: track_btn
-        text: root.titulo
-        background_normal: ""
-        background_color: (0.15, 0.15, 0.18, 1)
-        color: (1, 1, 1, 1)
-        halign: "left"
-        valign: "middle"
-        text_size: self.size
-        padding: dp(15), 0
 
+        id: track_btn
+
+        text: root.titulo
+
+        font_size: "16sp"
+
+        background_normal: ""
+
+        background_color: (0.15, 0.15, 0.18, 1)
+
+        color: (1, 1, 1, 1)
+
+        halign: "left"
+
+        valign: "middle"
+
+        text_size: self.size
+
+        padding: dp(18), 0
+
+
+# ================================================================
+# PANTALLA PRINCIPAL
+# ================================================================
 
 <PlayerScreen>:
+
     BoxLayout:
+
         orientation: "vertical"
-        canvas.before:
-            Color:
-                rgba: (0.08, 0.08, 0.1, 1)
-            Rectangle:
-                pos: self.pos
-                size: self.size
+
+        spacing: dp(5)
+
+        padding: dp(10)
+
+
+        # --------------------------------------------------------
+        # PARTE SUPERIOR
+        # --------------------------------------------------------
 
         BoxLayout:
-            orientation: "vertical"
-            size_hint_y: 0.45
-            padding: dp(20)
-            spacing: dp(8)
+
+            orientation: "horizontal"
+
+            size_hint_y: 0.48
+
+            spacing: dp(15)
+
+
+            # ----------------------------------------------------
+            # CARATULA
+            # ----------------------------------------------------
 
             Image:
+
                 id: caratula_img
+
                 source: ""
+
+                size_hint_x: 0.48
+
                 allow_stretch: True
+
                 keep_ratio: True
 
-            Label:
-                id: banda_label
-                text: ""
-                font_size: "22sp"
-                bold: True
-                size_hint_y: None
-                height: dp(30)
 
-            Label:
-                id: disco_label
-                text: ""
-                font_size: "16sp"
-                color: (0.7, 0.7, 0.7, 1)
-                size_hint_y: None
-                height: dp(24)
+            # ----------------------------------------------------
+            # INFORMACION DEL DISCO
+            # ----------------------------------------------------
 
-        ScrollView:
-            size_hint_y: 0.35
             BoxLayout:
-                id: tracklist_box
+
                 orientation: "vertical"
-                size_hint_y: None
-                height: self.minimum_height
-                spacing: dp(2)
+
+                size_hint_x: 0.52
+
+                spacing: dp(8)
+
+                padding: dp(5)
+
+
+                Label:
+
+                    id: banda_label
+
+                    text: ""
+
+                    font_size: "24sp"
+
+                    bold: True
+
+                    size_hint_y: None
+
+                    height: dp(40)
+
+                    halign: "left"
+
+                    valign: "middle"
+
+                    text_size: self.size
+
+
+                Label:
+
+                    id: disco_label
+
+                    text: ""
+
+                    font_size: "19sp"
+
+                    bold: True
+
+                    size_hint_y: None
+
+                    height: dp(32)
+
+                    color: (0.75, 0.75, 0.75, 1)
+
+                    halign: "left"
+
+                    valign: "middle"
+
+                    text_size: self.size
+
+
+                Label:
+
+                    id: descripcion_label
+
+                    text: ""
+
+                    font_size: "13sp"
+
+                    color: (0.85, 0.85, 0.85, 1)
+
+                    halign: "left"
+
+                    valign: "top"
+
+                    text_size: self.width, None
+
+                    size_hint_y: 1
+
+
+        # --------------------------------------------------------
+        # TITULO LISTA
+        # --------------------------------------------------------
 
         Label:
-            id: status_label
-            text: "Elegi un tema para reproducir"
+
+            text: "TEMAS"
+
+            font_size: "16sp"
+
+            bold: True
+
             size_hint_y: None
-            height: dp(30)
+
+            height: dp(28)
+
+            halign: "left"
+
+            text_size: self.size
+
+
+        # --------------------------------------------------------
+        # LISTA DE TEMAS
+        # --------------------------------------------------------
+
+        ScrollView:
+
+            id: tracks_scroll
+
+            size_hint_y: 0.34
+
+
+            BoxLayout:
+
+                id: tracklist_box
+
+                orientation: "vertical"
+
+                size_hint_y: None
+
+                height: self.minimum_height
+
+                spacing: dp(3)
+
+
+        # --------------------------------------------------------
+        # ESTADO
+        # --------------------------------------------------------
+
+        Label:
+
+            id: status_label
+
+            text: "Elegí un tema para reproducir"
+
+            size_hint_y: None
+
+            height: dp(32)
+
             color: (0.6, 0.9, 0.6, 1)
+
             font_size: "13sp"
 
+            halign: "center"
+
+            valign: "middle"
+
+            text_size: self.size
+
+        # --------------------------------------------------------
+        # CONTROLES
+        # --------------------------------------------------------
+
         BoxLayout:
-            size_hint_y: 0.12
-            padding: dp(20), dp(10)
-            spacing: dp(20)
+
+            size_hint_y: None
+            height: dp(60)
+            spacing: dp(10)
+            padding: dp(5)
 
             Button:
+
                 text: "<<"
-                font_size: "20sp"
+                font_size: "24sp"
+                bold: True
+                background_normal: ""
+                background_color: (0.15, 0.15, 0.18, 1)
+                color: (1, 1, 1, 1)
                 on_release: app.prev_track()
 
             Button:
-                text: "Play / Pause"
+
+                text: "PLAY / STOP"
                 font_size: "18sp"
+                bold: True
+                background_normal: ""
                 background_color: (0.2, 0.6, 0.3, 1)
+                color: (1, 1, 1, 1)
                 on_release: app.toggle_play_pause()
 
             Button:
+
                 text: ">>"
-                font_size: "20sp"
+                font_size: "24sp"
+                bold: True
+                background_normal: ""
+                background_color: (0.15, 0.15, 0.18, 1)
+                color: (1, 1, 1, 1)
                 on_release: app.next_track()

@@ -1,8 +1,11 @@
 
+
 """
 CD Digital - Reproductor de disco para fans
-Version liviana: el APK no trae los mp3, los descarga del servidor
-la primera vez que cada tema se reproduce y los guarda en cache local.
+
+La aplicación no trae los MP3 dentro del APK/EXE.
+Los descarga del servidor la primera vez que se reproduce
+cada tema y los guarda en cache local.
 """
 
 from kivy.app import App
@@ -12,27 +15,38 @@ from kivy.core.audio import SoundLoader
 from kivy.clock import mainthread
 from kivy.properties import StringProperty, BooleanProperty
 from kivy.lang import Builder
-from kivy.utils import platform
+
 import os
 import sys
 import threading
 import requests
 
 
+# --------------------------------------------------------------------
+# RUTA DE RECURSOS
+# --------------------------------------------------------------------
+
 def resource_path(nombre_archivo):
     """
-    Devuelve la ruta correcta al archivo, tanto corriendo con
-    python main.py como empaquetado en un exe con PyInstaller.
+    Devuelve la ruta correcta del archivo tanto ejecutando
+    con Python como empaquetado con PyInstaller.
     """
 
     if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, nombre_archivo)
+        return os.path.join(
+            sys._MEIPASS,
+            nombre_archivo
+        )
 
     return os.path.join(
         os.path.abspath("."),
         nombre_archivo
     )
 
+
+# --------------------------------------------------------------------
+# CARGAR INTERFAZ
+# --------------------------------------------------------------------
 
 Builder.load_file(
     resource_path("player.kv")
@@ -52,7 +66,6 @@ API_KEY = "cambiar-esta-clave-123"
 # ELEMENTOS DE LA INTERFAZ
 # --------------------------------------------------------------------
 
-
 class TrackItem(BoxLayout):
 
     titulo = StringProperty("")
@@ -67,7 +80,6 @@ class PlayerScreen(Screen):
 # APLICACION
 # --------------------------------------------------------------------
 
-
 class CDDigitalApp(App):
 
     sound = None
@@ -78,22 +90,25 @@ class CDDigitalApp(App):
 
     tracks = []
 
+    # Indica si el stop fue provocado manualmente.
+    manual_stop = False
+
+    # Información del disco
+    banda = StringProperty("")
+    disco = StringProperty("")
+    descripcion = StringProperty("")
+
 
     # ----------------------------------------------------------------
-    # INICIO DE LA APLICACION
+    # INICIO
     # ----------------------------------------------------------------
 
     def build(self):
-
-        # Directorio privado de datos de la aplicación.
-        # Kivy lo adapta correctamente a Windows y Android.
 
         self.cache_dir = os.path.join(
             self.user_data_dir,
             ".cd_digital_cache"
         )
-
-        # Crear la carpeta de cache si no existe.
 
         os.makedirs(
             self.cache_dir,
@@ -125,12 +140,17 @@ class CDDigitalApp(App):
 
 
     # ----------------------------------------------------------------
-    # CARGAR LISTA DE TEMAS
+    # CARGAR INFORMACION DEL DISCO
     # ----------------------------------------------------------------
 
     def cargar_tracklist(self):
 
         try:
+
+            print("======================================")
+            print("CONECTANDO CON EL SERVIDOR")
+            print(SERVER_URL)
+            print("======================================")
 
             r = requests.get(
                 f"{SERVER_URL}/tracks",
@@ -144,14 +164,41 @@ class CDDigitalApp(App):
 
             data = r.json()
 
-            self.tracks = data["tracks"]
+            self.tracks = data.get(
+                "tracks",
+                []
+            )
+
+            print("========== TRACKS RECIBIDOS ==========")
+            print(self.tracks)
+            print("TOTAL DE TEMAS:", len(self.tracks))
+            print("======================================")
+
+            banda = data.get(
+                "banda",
+                "RIA rock"
+            )
+
+            disco = data.get(
+                "disco",
+                "8´lineas"
+            )
+
+            descripcion = data.get(
+                "descripcion",
+                ""
+            )
 
             self.set_ui_disco(
-                data["banda"],
-                data["disco"]
+                banda,
+                disco,
+                descripcion
             )
 
         except Exception as e:
+
+            print("ERROR CARGANDO TRACKLIST:")
+            print(e)
 
             self.set_status(
                 f"No se pudo conectar al servidor: {e}"
@@ -163,27 +210,47 @@ class CDDigitalApp(App):
     # ----------------------------------------------------------------
 
     @mainthread
-    def set_ui_disco(self, banda, disco):
+    def set_ui_disco(
+        self,
+        banda,
+        disco,
+        descripcion
+    ):
 
         root = self.player_screen.ids
+
+        self.banda = banda
+        self.disco = disco
+        self.descripcion = descripcion
 
         root.banda_label.text = banda
 
         root.disco_label.text = disco
 
+        if "descripcion_label" in root:
+            root.descripcion_label.text = descripcion
+
+        # Limpiar lista
         root.tracklist_box.clear_widgets()
 
-
+        # Crear lista de temas
         for t in self.tracks:
 
             item = TrackItem()
 
-            item.titulo = t["titulo"]
+            item.titulo = t.get(
+                "titulo",
+                "Tema sin nombre"
+            )
 
-            item.track_id = t["id"]
+            item.track_id = t.get(
+                "id",
+                ""
+            )
 
             item.ids.track_btn.bind(
-                on_release=lambda btn, tid=t["id"]:
+                on_release=lambda btn,
+                tid=item.track_id:
                 self.play_track(tid)
             )
 
@@ -191,11 +258,11 @@ class CDDigitalApp(App):
                 item
             )
 
-
         self.set_status(
-            "Elegi un tema para reproducir"
+            "Elegí un tema para reproducir"
         )
 
+        # Cargar carátula
         self.cargar_caratula()
 
 
@@ -218,10 +285,11 @@ class CDDigitalApp(App):
             "caratula.jpg"
         )
 
-
         if not os.path.exists(cache_path):
 
             try:
+
+                print("Descargando carátula...")
 
                 r = requests.get(
                     f"{SERVER_URL}/caratula",
@@ -231,22 +299,25 @@ class CDDigitalApp(App):
                     timeout=60,
                 )
 
+                r.raise_for_status()
 
-                if r.status_code == 200:
+                with open(
+                    cache_path,
+                    "wb"
+                ) as f:
 
-                    with open(
-                        cache_path,
-                        "wb"
-                    ) as f:
+                    f.write(
+                        r.content
+                    )
 
-                        f.write(
-                            r.content
-                        )
+                print("Carátula descargada.")
 
-            except Exception:
+            except Exception as e:
+
+                print("Error descargando carátula:")
+                print(e)
 
                 return
-
 
         if os.path.exists(cache_path):
 
@@ -277,33 +348,44 @@ class CDDigitalApp(App):
 
     def play_track(self, track_id):
 
+        if not track_id:
+            return
+
+        print("Solicitando tema:", track_id)
+
         cache_path = os.path.join(
             self.cache_dir,
             f"{track_id}.mp3"
         )
 
-
+        # Si ya está descargado
         if os.path.exists(cache_path):
+
+            print("Tema encontrado en cache.")
 
             self._reproducir_desde_cache(
                 track_id,
                 cache_path
             )
 
-        else:
+            return
 
-            self.set_status(
-                "Descargando tema..."
-            )
+        # Descargar
+        print("Tema no encontrado en cache.")
+        print("Descargando:", track_id)
 
-            threading.Thread(
-                target=self._descargar_y_reproducir,
-                args=(
-                    track_id,
-                    cache_path
-                ),
-                daemon=True
-            ).start()
+        self.set_status(
+            "Descargando tema..."
+        )
+
+        threading.Thread(
+            target=self._descargar_y_reproducir,
+            args=(
+                track_id,
+                cache_path
+            ),
+            daemon=True
+        ).start()
 
 
     # ----------------------------------------------------------------
@@ -315,6 +397,8 @@ class CDDigitalApp(App):
         track_id,
         cache_path
     ):
+
+        tmp_path = cache_path + ".part"
 
         try:
 
@@ -329,11 +413,6 @@ class CDDigitalApp(App):
 
             r.raise_for_status()
 
-            tmp_path = (
-                cache_path + ".part"
-            )
-
-
             with open(
                 tmp_path,
                 "wb"
@@ -344,23 +423,34 @@ class CDDigitalApp(App):
                 ):
 
                     if chunk:
-
                         f.write(chunk)
-
 
             os.replace(
                 tmp_path,
                 cache_path
             )
 
+            print(
+                "Descarga completada:",
+                track_id
+            )
 
             self._reproducir_desde_cache(
                 track_id,
                 cache_path
             )
 
-
         except Exception as e:
+
+            print("ERROR DESCARGANDO MP3:")
+            print(e)
+
+            if os.path.exists(tmp_path):
+
+                try:
+                    os.remove(tmp_path)
+                except Exception:
+                    pass
 
             self.set_status(
                 f"Error al descargar: {e}"
@@ -378,46 +468,90 @@ class CDDigitalApp(App):
         cache_path
     ):
 
+        # Detener tema anterior
         if self.sound:
 
-            self.sound.stop()
+            self.manual_stop = True
 
-            self.sound.unload()
+            try:
+                self.sound.stop()
+            except Exception:
+                pass
 
+            try:
+                self.sound.unload()
+            except Exception:
+                pass
+
+            self.sound = None
+
+        # Cargar nuevo tema
+        print("Cargando audio:", cache_path)
 
         self.sound = SoundLoader.load(
             cache_path
         )
 
+        if not self.sound:
 
-        if self.sound:
-
-            self.sound.play()
-
-            self.current_track_id = track_id
-
-            self.is_playing = True
-
-
-            titulo = next(
-                (
-                    t["titulo"]
-                    for t in self.tracks
-                    if t["id"] == track_id
-                ),
-                track_id
+            print(
+                "ERROR: SoundLoader no pudo cargar:",
+                cache_path
             )
-
 
             self.set_status(
-                f"Reproduciendo: {titulo}"
+                "No se pudo reproducir el archivo"
             )
 
+            self.is_playing = False
 
-            self.sound.bind(
-                on_stop=lambda *_:
-                self.on_track_finished()
-            )
+            return
+
+        self.current_track_id = track_id
+
+        self.is_playing = True
+
+        self.manual_stop = False
+
+        # Buscar título
+        titulo = next(
+            (
+                t.get("titulo", track_id)
+                for t in self.tracks
+                if t.get("id") == track_id
+            ),
+            track_id
+        )
+
+        self.set_status(
+            f"Reproduciendo: {titulo}"
+        )
+
+        print(
+            "Reproduciendo:",
+            titulo
+        )
+
+        self.sound.bind(
+            on_stop=self._audio_stop
+        )
+
+        self.sound.play()
+
+
+    # ----------------------------------------------------------------
+    # EVENTO STOP DEL AUDIO
+    # ----------------------------------------------------------------
+
+    def _audio_stop(self, *args):
+
+        # Si el stop fue provocado por nosotros,
+        # no significa que el tema haya terminado.
+        if self.manual_stop:
+            self.manual_stop = False
+            return
+
+        self.on_track_finished()
 
 
     # ----------------------------------------------------------------
@@ -431,23 +565,71 @@ class CDDigitalApp(App):
             if self.tracks:
 
                 self.play_track(
-                    self.tracks[0]["id"]
+                    self.tracks[0].get("id")
                 )
 
             return
 
+        # ------------------------------------------------------------
+        # PAUSAR
+        # ------------------------------------------------------------
 
         if self.is_playing:
 
-            self.sound.stop()
+            try:
 
-            self.is_playing = False
+                self.manual_stop = True
 
-        else:
+                self.sound.stop()
+
+                self.is_playing = False
+
+                self.set_status(
+                    "Reproducción detenida"
+                )
+
+            except Exception as e:
+
+                self.set_status(
+                    f"Error al detener: {e}"
+                )
+
+            return
+
+        # ------------------------------------------------------------
+        # VOLVER A REPRODUCIR
+        # ------------------------------------------------------------
+
+        try:
+
+            self.manual_stop = False
 
             self.sound.play()
 
             self.is_playing = True
+
+            titulo = next(
+                (
+                    t.get(
+                        "titulo",
+                        self.current_track_id
+                    )
+                    for t in self.tracks
+                    if t.get("id")
+                    == self.current_track_id
+                ),
+                self.current_track_id
+            )
+
+            self.set_status(
+                f"Reproduciendo: {titulo}"
+            )
+
+        except Exception as e:
+
+            self.set_status(
+                f"Error de reproducción: {e}"
+            )
 
 
     # ----------------------------------------------------------------
@@ -457,25 +639,35 @@ class CDDigitalApp(App):
     def next_track(self):
 
         ids = [
-            t["id"]
+            t.get("id")
             for t in self.tracks
+            if t.get("id")
         ]
 
-
         if not ids:
-
             return
 
+        if self.current_track_id in ids:
 
-        i = (
-            ids.index(self.current_track_id)
-            if self.current_track_id in ids
-            else -1
+            i = ids.index(
+                self.current_track_id
+            )
+
+        else:
+
+            i = -1
+
+        siguiente = ids[
+            (i + 1) % len(ids)
+        ]
+
+        print(
+            "Siguiente tema:",
+            siguiente
         )
 
-
         self.play_track(
-            ids[(i + 1) % len(ids)]
+            siguiente
         )
 
 
@@ -486,43 +678,59 @@ class CDDigitalApp(App):
     def prev_track(self):
 
         ids = [
-            t["id"]
+            t.get("id")
             for t in self.tracks
+            if t.get("id")
         ]
 
-
         if not ids:
-
             return
 
+        if self.current_track_id in ids:
 
-        i = (
-            ids.index(self.current_track_id)
-            if self.current_track_id in ids
-            else 0
+            i = ids.index(
+                self.current_track_id
+            )
+
+        else:
+
+            i = 0
+
+        anterior = ids[
+            (i - 1) % len(ids)
+        ]
+
+        print(
+            "Tema anterior:",
+            anterior
         )
 
-
         self.play_track(
-            ids[(i - 1) % len(ids)]
+            anterior
         )
 
 
     # ----------------------------------------------------------------
-    # FINALIZO EL TEMA
+    # FINALIZACION DEL TEMA
     # ----------------------------------------------------------------
 
     def on_track_finished(self):
 
-        if self.is_playing:
+        self.is_playing = False
 
-            self.next_track()
+        self.set_status(
+            "Tema finalizado. Elegí otro tema."
+        )
+
+        print(
+            "Tema finalizado:",
+            self.current_track_id
+        )
 
 
 # --------------------------------------------------------------------
 # EJECUTAR APLICACION
 # --------------------------------------------------------------------
-
 
 if __name__ == "__main__":
 
