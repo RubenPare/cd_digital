@@ -93,11 +93,7 @@ def get_audio(track_id: str, x_api_key: str = Header(default=None)):
             detail="Tema no encontrado"
         )
 
-    path = os.path.join(AUDIO_DIR, track["archivo"])
-
-    if not os.path.exists(path):
-        raise HTTPException(
-            status_code=404,
+    path = os.path.join(AUDIO_DIR, "caratula.jpg")
             detail="Archivo no disponible en el servidor"
         )
 
@@ -111,11 +107,7 @@ def get_audio(track_id: str, x_api_key: str = Header(default=None)):
 def get_caratula(x_api_key: str = Header(default=None)):
     verificar_key(x_api_key)
 
-    path = os.path.join(
-        AUDIO_DIR,
-        "..",
-        "caratula.jpg"
-    )
+    path = os.path.join(AUDIO_DIR, "caratula.jpg")
 
     if not os.path.exists(path):
         raise HTTPException(
