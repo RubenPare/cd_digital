@@ -4,19 +4,16 @@ import os
 
 app = FastAPI(title="CD Digital - Servidor")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-AUDIO_DIR = os.path.join(BASE_DIR, "audio")
-
+AUDIO_DIR = "audio"
 API_KEY = "cambiar-esta-clave-123"
 
 NOMBRE_BANDA = "RIA rock"
 NOMBRE_DISCO = "8´lineas"
 
-DESCRIPCION = """
-8´lineas es el disco de RIA rock.
+DESCRIPCION = """8´lineas es el disco de RIA rock.
+
 Una propuesta de rock con canciones que recorren
-diferentes historias, emociones y experiencias.
-"""
+diferentes historias, emociones y experiencias."""
 
 TRACKLIST = [
     {
@@ -61,23 +58,13 @@ TRACKLIST = [
     }
 ]
 
-
 def verificar_key(x_api_key):
-
     if x_api_key != API_KEY:
-        raise HTTPException(
-            status_code=401,
-            detail="No autorizado"
-        )
-
+        raise HTTPException(status_code=401, detail="No autorizado")
 
 @app.get("/tracks")
-def get_tracks(
-    x_api_key: str = Header(default=None)
-):
-
+def get_tracks(x_api_key: str = Header(default=None)):
     verificar_key(x_api_key)
-
     return {
         "banda": NOMBRE_BANDA,
         "disco": NOMBRE_DISCO,
@@ -91,13 +78,8 @@ def get_tracks(
         ],
     }
 
-
 @app.get("/audio/{track_id}")
-def get_audio(
-    track_id: str,
-    x_api_key: str = Header(default=None)
-):
-
+def get_audio(track_id: str, x_api_key: str = Header(default=None)):
     verificar_key(x_api_key)
 
     track = next(
@@ -111,10 +93,7 @@ def get_audio(
             detail="Tema no encontrado"
         )
 
-    path = os.path.join(
-        AUDIO_DIR,
-        track["archivo"]
-    )
+    path = os.path.join(AUDIO_DIR, track["archivo"])
 
     if not os.path.exists(path):
         raise HTTPException(
@@ -128,17 +107,14 @@ def get_audio(
         filename=track["archivo"]
     )
 
-
 @app.get("/caratula")
-def get_caratula(
-    x_api_key: str = Header(default=None)
-):
-
+def get_caratula(x_api_key: str = Header(default=None)):
     verificar_key(x_api_key)
 
     path = os.path.join(
         AUDIO_DIR,
-        "caratula.jpg.jpeg"
+        "..",
+        "caratula.jpg"
     )
 
     if not os.path.exists(path):
@@ -151,4 +127,3 @@ def get_caratula(
         path,
         media_type="image/jpeg"
     )
-
