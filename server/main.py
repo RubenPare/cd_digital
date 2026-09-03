@@ -93,7 +93,11 @@ def get_audio(track_id: str, x_api_key: str = Header(default=None)):
             detail="Tema no encontrado"
         )
 
-    path = os.path.join(AUDIO_DIR, "caratula.jpg")
+    path = os.path.join(AUDIO_DIR, track["archivo"])
+
+    if not os.path.exists(path):
+        raise HTTPException(
+            status_code=404,
             detail="Archivo no disponible en el servidor"
         )
 
