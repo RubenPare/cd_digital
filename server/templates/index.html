@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html lang="es"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>RIA rock — 8´lineas</title>
+
+<style> * { box-sizing: border-box; } body { margin: 0; background: #101014; color: white; font-family: Arial, Helvetica, sans-serif; } .container { max-width: 950px; margin: auto; padding: 18px; } .top { display: flex; gap: 25px; align-items: flex-start; margin-bottom: 15px; } .cover { width: 42%; max-width: 360px; aspect-ratio: 1 / 1; object-fit: contain; background: #18181d; } .info { flex: 1; padding: 5px; } .band { font-size: 30px; font-weight: bold; margin-bottom: 8px; } .album { font-size: 22px; font-weight: bold; color: #bdbdc3; margin-bottom: 15px; } .description { color: #d5d5d8; font-size: 15px; line-height: 1.5; } .section-title { font-size: 17px; font-weight: bold; margin: 10px 0; } .track-list { max-height: 340px; overflow-y: auto; } .track { width: 100%; min-height: 52px; margin-bottom: 4px; border: 0; border-radius: 3px; background: #26262e; color: white; text-align: left; padding: 0 18px; font-size: 16px; cursor: pointer; } .track:hover { background: #303039; } .track.active { background: #345b42; } .status { height: 34px; display: flex; align-items: center; justify-content: center; color: #9ee0a7; font-size: 14px; text-align: center; } .progress-container { margin: 5px 5px 10px 5px; } .progress { width: 100%; accent-color: #4ca968; cursor: pointer; } .time { display: flex; justify-content: space-between; color: #999; font-size: 11px; } .controls { display: flex; gap: 10px; height: 60px; } .control { flex: 1; border: 0; border-radius: 4px; background: #26262e; color: white; font-size: 22px; font-weight: bold; cursor: pointer; } .play { flex: 2; background: #339452; font-size: 18px; } .control:active { transform: scale(0.98); } @media (max-width: 650px) { .container { padding: 10px; } .top { flex-direction: column; align-items: center; gap: 12px; } .cover { width: 75%; max-width: 320px; } .info { width: 100%; text-align: left; } .band { font-size: 25px; } .album { font-size: 20px; } .description { font-size: 14px; } .track-list { max-height: 330px; } .controls { height: 58px; } .control { font-size: 20px; } } </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="top">
+
+    <img
+        id="cover"
+        class="cover"
+        src="/web/caratula"
+        alt="Carátula 8´lineas"
+    >
+
+    <div class="info">
+
+        <div id="band" class="band">
+            RIA rock
+        </div>
+
+        <div id="album" class="album">
+            8´lineas
+        </div>
+
+        <div id="description" class="description">
+            Cargando información...
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="section-title">
+    TEMAS
+</div>
+
+
+<div id="trackList" class="track-list">
+</div>
+
+
+<div id="status" class="status">
+    Elegí un tema para reproducir
+</div>
+
+
+<div class="progress-container">
+
+    <input
+        id="progress"
+        class="progress"
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+    >
+
+    <div class="time">
+        <span id="currentTime">0:00</span>
+        <span id="duration">0:00</span>
+    </div>
+
+</div>
+
+
+<div class="controls">
+
+    <button
+        class="control"
+        onclick="previousTrack()"
+    >
+        &lt;&lt;
+    </button>
+
+    <button
+        id="playButton"
+        class="control play"
+        onclick="togglePlayPause()"
+    >
+        ▶ PLAY
+    </button>
+
+    <button
+        class="control"
+        onclick="nextTrack()"
+    >
+        &gt;&gt;
+    </button>
+
+</div>
+
+</div>
+
+<audio id="audio" preload="metadata"></audio>
+
+<script> let tracks = []; let currentTrack = -1; const audio = document.getElementById("audio"); const trackList = document.getElementById("trackList"); const statusLabel = document.getElementById("status"); const playButton = document.getElementById("playButton"); const progress = document.getElementById("progress"); const currentTimeLabel = document.getElementById("currentTime"); const durationLabel = document.getElementById("duration"); /* ============================================================ CARGAR INFORMACIÓN DEL DISCO ============================================================ */ async function loadAlbum() { try { const response = await fetch("/web/tracks"); if (!response.ok) { throw new Error("No se pudo cargar el disco"); } const data = await response.json(); document.getElementById("band").textContent = data.banda; document.getElementById("album").textContent = data.disco; document.getElementById("description").textContent = data.descripcion; tracks = data.tracks; createTrackList(); } catch (error) { statusLabel.textContent = "No se pudo cargar el contenido del disco."; console.error(error); } } /* ============================================================ CREAR LISTA DE TEMAS ============================================================ */ function createTrackList() { trackList.innerHTML = ""; tracks.forEach((track, index) => { const button = document.createElement("button"); button.className = "track"; button.textContent = String(index + 1).padStart(2, "0") + " " + track.titulo; button.onclick = function() { selectTrack(index); }; button.dataset.index = index; trackList.appendChild(button); }); } /* ============================================================ SELECCIONAR TEMA ============================================================ */ function selectTrack(index) { if (index < 0 || index >= tracks.length) { return; } currentTrack = index; const track = tracks[index]; audio.src = "/stream/" + encodeURIComponent(track.id); audio.load(); audio.play() .then(() => { updateInterface(); }) .catch(error => { console.error(error); statusLabel.textContent = "No se pudo reproducir el tema."; }); updateInterface(); } /* ============================================================ PLAY / PAUSA ============================================================ */ function togglePlayPause() { if (currentTrack === -1) { if (tracks.length > 0) { selectTrack(0); } return; } if (audio.paused) { audio.play() .then(() => { updateInterface(); }); } else { audio.pause(); updateInterface(); } } /* ============================================================ TEMA ANTERIOR ============================================================ */ function previousTrack() { if (tracks.length === 0) { return; } if (currentTrack <= 0) { selectTrack(tracks.length - 1); } else { selectTrack(currentTrack - 1); } } /* ============================================================ TEMA SIGUIENTE ============================================================ */ function nextTrack() { if (tracks.length === 0) { return; } if (currentTrack >= tracks.length - 1) { selectTrack(0); } else { selectTrack(currentTrack + 1); } } /* ============================================================ ACTUALIZAR INTERFAZ ============================================================ */ function updateInterface() { const buttons = document.querySelectorAll(".track"); buttons.forEach((button, index) => { button.classList.remove("active"); if (index === currentTrack) { button.classList.add("active"); } }); if (currentTrack >= 0) { const title = tracks[currentTrack].titulo; if (audio.paused) { playButton.textContent = "▶ CONTINUAR"; statusLabel.textContent = "En pausa — " + title; } else { playButton.textContent = "⏸ PAUSA"; statusLabel.textContent = "Reproduciendo — " + title; } } else { playButton.textContent = "▶ PLAY"; statusLabel.textContent = "Elegí un tema para reproducir"; } } /* ============================================================ EVENTOS DEL AUDIO ============================================================ */ audio.addEventListener("play", function() { updateInterface(); }); audio.addEventListener("pause", function() { updateInterface(); }); /* ============================================================ CUANDO TERMINA UN TEMA ============================================================ */ audio.addEventListener("ended", function() { nextTrack(); }); /* ============================================================ DURACIÓN ============================================================ */ audio.addEventListener("loadedmetadata", function() { durationLabel.textContent = formatTime(audio.duration); progress.value = 0; }); /* ============================================================ PROGRESO ============================================================ */ audio.addEventListener("timeupdate", function() { if (!audio.duration) { return; } const percent = (audio.currentTime / audio.duration) * 100; progress.value = percent; currentTimeLabel.textContent = formatTime(audio.currentTime); }); /* ============================================================ CAMBIAR POSICIÓN ============================================================ */ progress.addEventListener("input", function() { if (!audio.duration) { return; } audio.currentTime = (progress.value / 100) * audio.duration; }); /* ============================================================ FORMATO DE TIEMPO ============================================================ */ function formatTime(seconds) { if (!seconds || isNaN(seconds)) { return "0:00"; } const minutes = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60) .toString() .padStart(2, "0"); return minutes + ":" + secs; } /* ============================================================ INICIAR ============================================================ */ loadAlbum(); </script>
+
+</body> </html>
