@@ -53,5 +53,9 @@ def get_caratula(x_api_key: str = Header(default=None)):
     verificar_key(x_api_key)
     path = os.path.join(AUDIO_DIR, "caratula.jpg.jpeg")
     if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="Carátula no disponible")
+        path_alt = os.path.join(AUDIO_DIR, "caratula.jpg")
+        if os.path.exists(path_alt):
+            path = path_alt
+        else:
+            raise HTTPException(status_code=404, detail="Carátula no disponible")
     return FileResponse(path, media_type="image/jpeg")
