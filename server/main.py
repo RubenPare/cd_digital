@@ -23,13 +23,14 @@ TRACKLIST = [
     {"id": "track08", "titulo": "Olla popular", "archivo": "Olla popular.mp3"}
 ]
 
-def verificar_key(x_api_key):
-    if x_api_key != API_KEY:
+def obtener_y_verificar_key(x_api_key: str = None, api_key: str = None, key: str = None):
+    token = x_api_key or api_key or key
+    if token != API_KEY:
         raise HTTPException(status_code=401, detail="No autorizado")
 
 @app.get("/tracks")
-def get_tracks(x_api_key: str = Header(default=None)):
-    verificar_key(x_api_key)
+def get_tracks(x_api_key: str = Header(default=None), api_key: str = Query(default=None), key: str = Query(default=None)):
+    obtener_y_verificar_key(x_api_key, api_key, key)
     return {
         "banda": NOMBRE_BANDA,
         "disco": NOMBRE_DISCO,
@@ -39,18 +40,22 @@ def get_tracks(x_api_key: str = Header(default=None)):
 
 @app.get("/audio/{track_id}")
 def get_audio(track_id: str, x_api_key: str = Header(default=None), api_key: str = Query(default=None), key: str = Query(default=None)):
-    verificar_key(x_api_key or api_key or key)
+    obtener_y_verificar_key(x_api_key, api_key, key)
+    
     track = next((t for t in TRACKLIST if t["id"] == track_id), None)
     if not track:
         raise HTTPException(status_code=404, detail="Tema no encontrado")
+        
     path = os.path.join(AUDIO_DIR, track["archivo"])
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Archivo no disponible en el servidor")
+        
     return FileResponse(path, media_type="audio/mpeg", filename=track["archivo"])
 
 @app.get("/caratula")
-def get_caratula(x_api_key: str = Header(default=None)):
-    verificar_key(x_api_key)
+def get_caratula(x_api_key: str = Header(default=None), api_key: str = Query(default=None), key: str = Query(default=None)):
+    obtener_y_verificar_key(x_api_key, api_key, key)
+    
     path = os.path.join(AUDIO_DIR, "caratula.jpg.jpeg")
     if not os.path.exists(path):
         path_alt = os.path.join(AUDIO_DIR, "caratula.jpg")
@@ -58,4 +63,5 @@ def get_caratula(x_api_key: str = Header(default=None)):
             path = path_alt
         else:
             raise HTTPException(status_code=404, detail="Carátula no disponible")
+            
     return FileResponse(path, media_type="image/jpeg")
